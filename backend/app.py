@@ -20,7 +20,10 @@ for directory in (UPLOADS_DIR, OUTPUTS_DIR):
 app = FastAPI(title="Adaptive Traffic Vision API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=[
+        "http://localhost:5173", "http://127.0.0.1:5173",
+        "http://localhost:5174", "http://127.0.0.1:5174",
+    ],
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -49,8 +52,8 @@ async def analyze_video(
 ) -> dict[str, object]:
     if avenue not in {"A", "B"}:
         raise HTTPException(status_code=422, detail="avenue debe ser A o B")
-    if direction not in {"down", "up"}:
-        raise HTTPException(status_code=422, detail="direction debe ser down o up")
+    if direction not in {"down", "up", "left", "right"}:
+        raise HTTPException(status_code=422, detail="direction debe ser down, up, left o right")
     suffix = Path(file.filename or "video.mp4").suffix.lower()
     if suffix not in {".mp4", ".mov", ".avi", ".mkv"}:
         raise HTTPException(status_code=415, detail="Formato de video no admitido")

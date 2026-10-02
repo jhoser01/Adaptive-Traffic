@@ -108,7 +108,7 @@ Los videos son sensores de entrada, no una réplica uno-a-uno de los vehículos 
 En una terminal, iniciar el backend:
 
 ```powershell
-backend\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload --port 8000
+backend\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload --port 8001
 ```
 
 En otra, iniciar el frontend:

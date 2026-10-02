@@ -8,6 +8,7 @@ export interface VideoAsset {
   duration?: number;
   width?: number;
   height?: number;
+  direction: 'down' | 'up' | 'left' | 'right';
 }
 
 export interface VideoAnalysisResult {

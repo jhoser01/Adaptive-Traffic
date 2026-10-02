@@ -13,7 +13,8 @@ if __name__ == "__main__":
     height = int(source.get(cv2.CAP_PROP_FRAME_HEIGHT))
     target = root / "uploads" / "highway-short.mp4"
     writer = cv2.VideoWriter(str(target), cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height))
-    for _ in range(10):
+    target_frames = int(fps * 10)
+    for _ in range(target_frames):
         ok, frame = source.read()
         if not ok:
             break

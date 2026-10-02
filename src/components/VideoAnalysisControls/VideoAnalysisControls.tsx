@@ -5,17 +5,18 @@ interface Props {
   canAnalyze: boolean;
   status: VideoPanelStatus;
   canStart: boolean;
+  message?: string;
   onAnalyze: () => void;
   onStart: () => void;
   onReset: () => void;
 }
 
-export function VideoAnalysisControls({ canAnalyze, status, canStart, onAnalyze, onStart, onReset }: Props) {
+export function VideoAnalysisControls({ canAnalyze, status, canStart, message, onAnalyze, onStart, onReset }: Props) {
   const waiting = status === 'ANALYZING';
   return (
     <section className="video-analysis-controls">
       <div className="sim-control-title">Control de videos</div>
-      <p>Sube ambos videos y analízalos con YOLO + ByteTrack para obtener la demanda de cada avenida.</p>
+      <p>{message ?? 'Sube ambos videos y analízalos con YOLO + ByteTrack para obtener la demanda de cada avenida.'}</p>
       <button className="action-btn primary video-analyze-btn" disabled={!canAnalyze || waiting} onClick={onAnalyze}>
         {waiting ? 'Analizando Avenida A y B...' : 'Analizar videos'}
       </button>

@@ -9,10 +9,12 @@ interface Props {
   asset: VideoAsset | null;
   status: VideoPanelStatus;
   result: VideoAnalysisResult | null;
+  error?: string | null;
   onSelect: (file: File) => void;
+  onDirectionChange: (direction: VideoAsset['direction']) => void;
 }
 
-export function VideoSourcePanel({ avenue, asset, status, result, onSelect }: Props) {
+export function VideoSourcePanel({ avenue, asset, status, result, error, onSelect, onDirectionChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const accent = avenue === 'A' ? 'var(--avenue-a)' : 'var(--avenue-b)';
 
@@ -51,12 +53,22 @@ export function VideoSourcePanel({ avenue, asset, status, result, onSelect }: Pr
           e.currentTarget.value = '';
         }} />
       </div>
+      {asset && <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-secondary)', marginTop: 8 }}>
+        Dirección de conteo
+        <select value={asset.direction} onChange={(event) => onDirectionChange(event.target.value as VideoAsset['direction'])}>
+          <option value="down">Abajo</option>
+          <option value="up">Arriba</option>
+          <option value="left">Izquierda</option>
+          <option value="right">Derecha</option>
+        </select>
+      </label>}
       <div className="video-placeholder-metrics">
         <span>Vehículos detectados <b>{result?.vehicle_count ?? '--'}</b></span>
         <span>Tasa de llegada <b>{result ? `${result.arrival_rate.toFixed(1)} veh/min` : '--'}</b></span>
         <span>Autos <b>{result?.class_counts.car ?? '--'}</b> · Motos <b>{result?.class_counts.motorcycle ?? '--'}</b></span>
         <span>Buses <b>{result?.class_counts.bus ?? '--'}</b> · Camiones <b>{result?.class_counts.truck ?? '--'}</b></span>
       </div>
+      {error && <div className="video-error" role="alert">{error}</div>}
     </section>
   );
 }

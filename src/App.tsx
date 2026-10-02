@@ -20,7 +20,7 @@ import { VideoAnalysisControls } from './components/VideoAnalysisControls/VideoA
 import type { AvenueId } from './types/traffic';
 import type { VideoAsset, VideoPanelStatus } from './types/video';
 import type { VideoAnalysisResult } from './types/video';
-import { analyzeVideo } from './services/visionApi';
+import { analyzeVideo, type CountDirection } from './services/visionApi';
 import { videoTrafficProvider } from './providers/VideoTrafficProvider';
 import './index.css';
 import './styles/components.css';
@@ -35,28 +35,44 @@ export default function App() {
   const [videos, setVideos] = useState<Record<AvenueId, VideoAsset | null>>({ A: null, B: null });
   const [results, setResults] = useState<Record<AvenueId, VideoAnalysisResult | null>>({ A: null, B: null });
   const [videoStatus, setVideoStatus] = useState<VideoPanelStatus>('EMPTY');
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [analysisMessage, setAnalysisMessage] = useState<string | null>(null);
 
   const selectVideo = (avenue: AvenueId, file: File) => {
     setVideos((current) => {
       if (current[avenue]) URL.revokeObjectURL(current[avenue]!.url);
-      return { ...current, [avenue]: { file, name: file.name, size: file.size, url: URL.createObjectURL(file) } };
+      return { ...current, [avenue]: { file, name: file.name, size: file.size, url: URL.createObjectURL(file), direction: 'down' } };
     });
     setResults((current) => ({ ...current, [avenue]: null }));
     setVideoSimulationStarted(false);
+    setVideoError(null);
+    setAnalysisMessage(null);
     setVideoStatus('READY');
+  };
+
+  const changeDirection = (avenue: AvenueId, direction: CountDirection) => {
+    setVideos((current) => current[avenue] ? { ...current, [avenue]: { ...current[avenue]!, direction } } : current);
+    setResults((current) => ({ ...current, [avenue]: null }));
+    setVideoSimulationStarted(false);
   };
 
   const analyzeVideos = async () => {
     if (!videos.A || !videos.B) return;
     setVideoStatus('ANALYZING');
+    setVideoError(null);
     try {
-      const [resultA, resultB] = await Promise.all([
-        analyzeVideo('A', videos.A.file),
-        analyzeVideo('B', videos.B.file),
-      ]);
-      setResults({ A: resultA, B: resultB });
+      setAnalysisMessage('Analizando Avenida A...');
+      const resultA = await analyzeVideo('A', videos.A.file, videos.A.direction);
+      setResults((current) => ({ ...current, A: resultA }));
+      setAnalysisMessage('Avenida A completada. Analizando Avenida B...');
+      const resultB = await analyzeVideo('B', videos.B.file, videos.B.direction);
+      setResults((current) => ({ ...current, B: resultB }));
+      setAnalysisMessage('Avenida A y Avenida B completadas.');
       setVideoStatus('ANALYZED');
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error desconocido durante el análisis.';
+      setVideoError(message);
+      setAnalysisMessage(null);
       setVideoStatus('ERROR');
     }
   };
@@ -81,9 +97,9 @@ export default function App() {
             <TrafficVideoPanel avenue="B" />
             <SimulationControl onReset={reset} />
           </> : <>
-            <VideoSourcePanel avenue="A" asset={videos.A} status={videoStatus} result={results.A} onSelect={(file) => selectVideo('A', file)} />
-            <VideoSourcePanel avenue="B" asset={videos.B} status={videoStatus} result={results.B} onSelect={(file) => selectVideo('B', file)} />
-            <VideoAnalysisControls canAnalyze={Boolean(videos.A && videos.B)} status={videoStatus} canStart={Boolean(results.A && results.B)} onAnalyze={analyzeVideos} onStart={startVideoSimulation} onReset={reset} />
+            <VideoSourcePanel avenue="A" asset={videos.A} status={videoStatus} result={results.A} error={videoError} onSelect={(file) => selectVideo('A', file)} onDirectionChange={(direction) => changeDirection('A', direction)} />
+            <VideoSourcePanel avenue="B" asset={videos.B} status={videoStatus} result={results.B} error={videoError} onSelect={(file) => selectVideo('B', file)} onDirectionChange={(direction) => changeDirection('B', direction)} />
+            <VideoAnalysisControls canAnalyze={Boolean(videos.A && videos.B)} status={videoStatus} canStart={Boolean(results.A && results.B)} message={videoError ?? analysisMessage ?? undefined} onAnalyze={analyzeVideos} onStart={startVideoSimulation} onReset={reset} />
           </>}
         </aside>
 

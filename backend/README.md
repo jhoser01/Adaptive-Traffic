@@ -13,19 +13,19 @@ Solo se consideran las clases COCO `car`, `motorcycle`, `bus` y `truck`. La lín
 Desde la raíz del proyecto en PowerShell:
 
 ```powershell
-backend\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload --port 8000
+backend\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload --port 8001
 ```
 
 El primer análisis descarga automáticamente `yolo11n.pt` si todavía no existe. Se requiere acceso a internet solo para esa descarga inicial.
 
 ## Endpoint
 
-`POST /analyze` recibe un `multipart/form-data`:
+`POST /analyze` recibe un `multipart/form-data`. El análisis se limita a los primeros 60 segundos y la salida se reduce manteniendo aspecto a un máximo de 1280×720:
 
 ```text
 file: <MP4 | MOV | AVI | MKV>
 avenue: A | B
-direction: down | up     # opcional, por defecto down
+direction: down | up | left | right
 ```
 
 Respuesta:
