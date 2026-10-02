@@ -9,6 +9,7 @@ import { MockTrafficProvider } from '../providers/MockTrafficProvider';
 import { AdaptiveTrafficController } from '../control/AdaptiveTrafficController';
 import { TrafficSimulation } from '../simulation/TrafficSimulation';
 import { getSignalColors } from '../control/TrafficSignalStateMachine';
+import { videoTrafficProvider } from '../providers/VideoTrafficProvider';
 
 const HISTORY_INTERVAL = 0.5; // seconds between history snapshots
 
@@ -24,7 +25,7 @@ export function useSimulationLoop() {
 
   useEffect(() => {
     const provider = providerRef.current;
-    const controller = controllerRef.current;
+    let controller = controllerRef.current;
     const sim = simulationRef.current;
 
     const loop = (timestamp: number) => {
@@ -33,12 +34,13 @@ export function useSimulationLoop() {
       if (s.dataSource !== lastSourceRef.current) {
         sim.reset();
         controllerRef.current = new AdaptiveTrafficController('A_GREEN');
+        controller = controllerRef.current;
         lastSourceRef.current = s.dataSource;
         historyTimerRef.current = 0;
         if (s.dataSource === 'VIDEO_AI') useTrafficStore.getState().resetSimulation();
       }
 
-      if (s.dataSource === 'VIDEO_AI') {
+      if (s.dataSource === 'VIDEO_AI' && !s.videoSimulationStarted) {
         rafRef.current = requestAnimationFrame(loop);
         return;
       }
@@ -59,15 +61,16 @@ export function useSimulationLoop() {
       const dt = rawDt * speed;
 
       // Sync provider levels from config
-      provider.setLevel('A', s.config.levelA);
-      provider.setLevel('B', s.config.levelB);
-      provider.tick(dt);
+      const activeProvider = s.dataSource === 'VIDEO_AI' ? videoTrafficProvider : provider;
+      activeProvider.setLevel('A', s.config.levelA);
+      activeProvider.setLevel('B', s.config.levelB);
+      activeProvider.tick(dt);
 
       // Provider supplies simulation demand; the Digital Twin measures output metrics.
-      const demandA = provider.getMetrics('A');
-      const demandB = provider.getMetrics('B');
-      const measuredA = sim.getMetrics('A');
-      const measuredB = sim.getMetrics('B');
+      const demandA = activeProvider.getMetrics('A');
+      const demandB = activeProvider.getMetrics('B');
+      const measuredA = s.dataSource === 'VIDEO_AI' ? demandA : sim.getMetrics('A');
+      const measuredB = s.dataSource === 'VIDEO_AI' ? demandB : sim.getMetrics('B');
 
       // Tick controller
       controller.tick(dt, measuredA, measuredB);

@@ -63,8 +63,9 @@ export function KPISection() {
   const queueB   = useTrafficStore((s) => s.queueB);
   const phase    = useTrafficStore((s) => s.phase);
   const dataSource = useTrafficStore((s) => s.dataSource);
+  const videoSimulationStarted = useTrafficStore((s) => s.videoSimulationStarted);
 
-  if (dataSource === 'VIDEO_AI') return <div className="kpi-section">
+  if (dataSource === 'VIDEO_AI' && !videoSimulationStarted) return <div className="kpi-section">
     <KPIItem value="--" label="Congestión estimada A" />
     <KPIItem value="--" label="Congestión estimada B" />
     <KPIItem value="--" label="Cola simulada A" />

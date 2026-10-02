@@ -45,3 +45,6 @@ export class VideoTrafficProvider implements TrafficProvider {
     return m;
   }
 }
+
+// Shared input provider used only after the user starts the video-driven twin.
+export const videoTrafficProvider = new VideoTrafficProvider();

@@ -1,5 +1,46 @@
+# Frontend
+node_modules/
+dist/
+dist-ssr/
+.vite/
+coverage/
+scripts/.build/
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+backend/.venv/
+.venv/
+venv/
+env/
+
+# IDE and OS
+.vscode/
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
 # Logs
-logs
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,18 +48,36 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# Temporary files
+*.tmp
+*.temp
+*.cache
 
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+# Uploads and generated analysis outputs
+backend/uploads/*
+!backend/uploads/.gitkeep
+backend/outputs/*
+!backend/outputs/.gitkeep
+uploads/*
+!uploads/.gitkeep
+outputs/*
+!outputs/.gitkeep
+runs/
+backend/runs/
+
+# Video and generated media
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.webm
+*.gif
+
+# YOLO / ML weights
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# Local model cache
+backend/models/*.pt

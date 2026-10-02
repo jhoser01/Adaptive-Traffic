@@ -91,9 +91,9 @@ greenA = MIN_GREEN + (MAX_GREEN − MIN_GREEN) × rA
 
 ---
 
-## 🎥 Video IA (interfaz preparada)
+## 🎥 Video IA (YOLO + ByteTrack)
 
-El selector `Video IA` activa una interfaz de captura local con dos módulos 16:9: `VIDEO AVENIDA A` y `VIDEO AVENIDA B`. Cada módulo acepta MP4, MOV o AVI y conserva únicamente la referencia local del archivo; no se suben archivos, no se ejecuta inferencia y no se fabrican detecciones. Mientras no exista el backend de visión, las métricas permanecen como `--` y el control de simulación queda deshabilitado.
+El selector `Video IA` conserva los dos módulos 16:9 existentes: `VIDEO AVENIDA A` y `VIDEO AVENIDA B`. Al cargar ambos archivos y pulsar **Analizar videos**, cada archivo se envía al backend FastAPI. YOLO11n detecta vehículos y ByteTrack mantiene IDs persistentes; el video resultante incluye cajas, clase, ID y línea virtual de conteo. La interfaz muestra conteo, tasa de llegada y desglose por clase.
 
 La conexión futura queda separada del gemelo digital:
 
@@ -101,7 +101,23 @@ La conexión futura queda separada del gemelo digital:
 video Avenida A/B → YOLO + Tracking → TrafficMetrics → AdaptiveTrafficController → Digital Twin
 ```
 
-Los videos son sensores de entrada, no una réplica uno-a-uno de los vehículos renderizados. La integración prevista es offline-first: analizar un archivo, validar las métricas observadas y luego alimentar el controlador mediante `VideoTrafficProvider`.
+Los videos son sensores de entrada, no una réplica uno-a-uno de los vehículos renderizados. Tras analizar ambos videos, **Iniciar simulación** entrega sus tasas de llegada a `VideoTrafficProvider`; el controlador existente reparte los verdes y el gemelo genera demanda equivalente.
+
+### Ejecutar la visión artificial local
+
+En una terminal, iniciar el backend:
+
+```powershell
+backend\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload --port 8000
+```
+
+En otra, iniciar el frontend:
+
+```powershell
+npm run dev
+```
+
+Abrir `http://localhost:5173`, seleccionar **Video IA**, subir un video para cada avenida, pulsar **Analizar videos** y finalmente **Iniciar simulación**. Ver [backend/README.md](backend/README.md) para el contrato del endpoint.
 
 ## 🔮 Integración futura
 

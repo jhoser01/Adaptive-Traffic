@@ -61,6 +61,7 @@ interface TrafficStore {
   // --- Config ---
   config: SimulationConfig;
   dataSource: DataSource;
+  videoSimulationStarted: boolean;
 
   // --- Actions ---
   setMetrics: (a: TrafficMetrics, b: TrafficMetrics) => void;
@@ -77,6 +78,7 @@ interface TrafficStore {
   setLevelA: (level: TrafficLevel) => void;
   setLevelB: (level: TrafficLevel) => void;
   setDataSource: (ds: DataSource) => void;
+  setVideoSimulationStarted: (started: boolean) => void;
   resetSimulation: () => void;
 }
 
@@ -124,6 +126,7 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
     running: true,
   },
   dataSource: 'SIMULATION',
+  videoSimulationStarted: false,
 
   setMetrics: (a, b) => set({ metricsA: a, metricsB: b }),
   setQueues: (qA, qB) => set({ queueA: qA, queueB: qB }),
@@ -160,8 +163,9 @@ export const useTrafficStore = create<TrafficStore>((set, get) => ({
   setLevelB: (level) =>
     set((s) => ({ config: { ...s.config, levelB: level } })),
   setDataSource: (ds) => set(() => ds === 'VIDEO_AI'
-    ? { dataSource: ds, metricsA: defaultMetrics, metricsB: defaultMetrics, queueA: 0, queueB: 0, vehicles: [], congestionHistory: [], queueHistory: [], arrivalBinsA: Array(12).fill(0), arrivalBinsB: Array(12).fill(0), decision: defaultDecision }
-    : { dataSource: ds }),
+    ? { dataSource: ds, videoSimulationStarted: false, metricsA: defaultMetrics, metricsB: defaultMetrics, queueA: 0, queueB: 0, vehicles: [], congestionHistory: [], queueHistory: [], arrivalBinsA: Array(12).fill(0), arrivalBinsB: Array(12).fill(0), decision: defaultDecision }
+    : { dataSource: ds, videoSimulationStarted: false }),
+  setVideoSimulationStarted: (started) => set({ videoSimulationStarted: started }),
   resetSimulation: () =>
     set({
       metricsA: defaultMetrics,

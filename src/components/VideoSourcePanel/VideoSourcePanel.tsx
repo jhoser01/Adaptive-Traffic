@@ -1,6 +1,6 @@
 import { useRef } from 'react';
 import type { AvenueId } from '../../types/traffic';
-import type { VideoAsset, VideoPanelStatus } from '../../types/video';
+import type { VideoAnalysisResult, VideoAsset, VideoPanelStatus } from '../../types/video';
 import { VisionOverlay } from '../VisionOverlay/VisionOverlay';
 import '../../styles/components.css';
 
@@ -8,10 +8,11 @@ interface Props {
   avenue: AvenueId;
   asset: VideoAsset | null;
   status: VideoPanelStatus;
+  result: VideoAnalysisResult | null;
   onSelect: (file: File) => void;
 }
 
-export function VideoSourcePanel({ avenue, asset, status, onSelect }: Props) {
+export function VideoSourcePanel({ avenue, asset, status, result, onSelect }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const accent = avenue === 'A' ? 'var(--avenue-a)' : 'var(--avenue-b)';
 
@@ -24,7 +25,7 @@ export function VideoSourcePanel({ avenue, asset, status, onSelect }: Props) {
       <div className={`video-player-frame ${asset ? 'has-video' : ''}`}>
         {asset ? (
           <>
-            <video src={asset.url} controls muted playsInline onLoadedMetadata={(event) => {
+            <video src={result?.processed_video ?? asset.url} controls muted playsInline onLoadedMetadata={(event) => {
               const video = event.currentTarget;
               video.setAttribute('aria-label', `Video de Avenida ${avenue}`);
             }} />
@@ -41,7 +42,7 @@ export function VideoSourcePanel({ avenue, asset, status, onSelect }: Props) {
       <div className="video-source-actions">
         <div className="video-file-state">
           <span>{asset ? asset.name : 'Sin video cargado'}</span>
-          <small>{asset ? `${Math.max(1, Math.round(asset.size / 1024))} KB · Pendiente de análisis` : 'El video funciona como sensor de entrada'}</small>
+          <small>{asset ? (status === 'ANALYZING' ? `Analizando Avenida ${avenue}...` : result ? 'Video procesado con YOLO + ByteTrack' : `${Math.max(1, Math.round(asset.size / 1024))} KB · Pendiente de análisis`) : 'El video funciona como sensor de entrada'}</small>
         </div>
         <button className="action-btn" onClick={() => inputRef.current?.click()}>{asset ? 'Cambiar' : 'Subir video'}</button>
         <input ref={inputRef} type="file" hidden accept="video/mp4,video/quicktime,video/x-msvideo" onChange={(e) => {
@@ -51,9 +52,10 @@ export function VideoSourcePanel({ avenue, asset, status, onSelect }: Props) {
         }} />
       </div>
       <div className="video-placeholder-metrics">
-        <span>Vehículos detectados <b>--</b></span>
-        <span>Congestión <b>--</b></span>
-        <span>Tasa de llegada <b>--</b></span>
+        <span>Vehículos detectados <b>{result?.vehicle_count ?? '--'}</b></span>
+        <span>Tasa de llegada <b>{result ? `${result.arrival_rate.toFixed(1)} veh/min` : '--'}</b></span>
+        <span>Autos <b>{result?.class_counts.car ?? '--'}</b> · Motos <b>{result?.class_counts.motorcycle ?? '--'}</b></span>
+        <span>Buses <b>{result?.class_counts.bus ?? '--'}</b> · Camiones <b>{result?.class_counts.truck ?? '--'}</b></span>
       </div>
     </section>
   );

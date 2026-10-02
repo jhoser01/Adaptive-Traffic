@@ -9,7 +9,8 @@ import '../../styles/components.css';
 export function AIDecisionPanel() {
   const decision = useTrafficStore((s) => s.decision);
   const dataSource = useTrafficStore((s) => s.dataSource);
-  if (dataSource === 'VIDEO_AI') return <div className="ai-panel"><div className="ai-header"><span className="ai-label">Control adaptativo</span></div><div className="ai-reason">Pendiente de análisis de video. No se muestran decisiones ni métricas inventadas.</div></div>;
+  const videoSimulationStarted = useTrafficStore((s) => s.videoSimulationStarted);
+  if (dataSource === 'VIDEO_AI' && !videoSimulationStarted) return <div className="ai-panel"><div className="ai-header"><span className="ai-label">Control adaptativo</span></div><div className="ai-reason">Analiza ambos videos e inicia la simulación para aplicar la demanda detectada.</div></div>;
 
   const demandAPct = Math.round(decision.demandA * 100);
   const demandBPct = Math.round(decision.demandB * 100);

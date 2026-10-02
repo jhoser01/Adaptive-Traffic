@@ -19,6 +19,9 @@ import { VideoSourcePanel } from './components/VideoSourcePanel/VideoSourcePanel
 import { VideoAnalysisControls } from './components/VideoAnalysisControls/VideoAnalysisControls';
 import type { AvenueId } from './types/traffic';
 import type { VideoAsset, VideoPanelStatus } from './types/video';
+import type { VideoAnalysisResult } from './types/video';
+import { analyzeVideo } from './services/visionApi';
+import { videoTrafficProvider } from './providers/VideoTrafficProvider';
 import './index.css';
 import './styles/components.css';
 
@@ -28,15 +31,42 @@ export default function App() {
   const { reset } = useSimulationLoop();
   const [tab, setTab] = useState<DashboardTab>('charts');
   const dataSource = useTrafficStore((s) => s.dataSource);
+  const setVideoSimulationStarted = useTrafficStore((s) => s.setVideoSimulationStarted);
   const [videos, setVideos] = useState<Record<AvenueId, VideoAsset | null>>({ A: null, B: null });
+  const [results, setResults] = useState<Record<AvenueId, VideoAnalysisResult | null>>({ A: null, B: null });
   const [videoStatus, setVideoStatus] = useState<VideoPanelStatus>('EMPTY');
 
   const selectVideo = (avenue: AvenueId, file: File) => {
     setVideos((current) => {
       if (current[avenue]) URL.revokeObjectURL(current[avenue]!.url);
-      return { ...current, [avenue]: { name: file.name, size: file.size, url: URL.createObjectURL(file) } };
+      return { ...current, [avenue]: { file, name: file.name, size: file.size, url: URL.createObjectURL(file) } };
     });
+    setResults((current) => ({ ...current, [avenue]: null }));
+    setVideoSimulationStarted(false);
     setVideoStatus('READY');
+  };
+
+  const analyzeVideos = async () => {
+    if (!videos.A || !videos.B) return;
+    setVideoStatus('ANALYZING');
+    try {
+      const [resultA, resultB] = await Promise.all([
+        analyzeVideo('A', videos.A.file),
+        analyzeVideo('B', videos.B.file),
+      ]);
+      setResults({ A: resultA, B: resultB });
+      setVideoStatus('ANALYZED');
+    } catch {
+      setVideoStatus('ERROR');
+    }
+  };
+
+  const startVideoSimulation = () => {
+    if (!results.A || !results.B) return;
+    videoTrafficProvider.ingestMetrics('A', { timestamp: Date.now(), vehiclesInZone: 0, arrivalRate: results.A.arrival_rate, normalizedDensity: 0, stoppedRatio: 0, congestionIndex: 0 });
+    videoTrafficProvider.ingestMetrics('B', { timestamp: Date.now(), vehiclesInZone: 0, arrivalRate: results.B.arrival_rate, normalizedDensity: 0, stoppedRatio: 0, congestionIndex: 0 });
+    reset();
+    setVideoSimulationStarted(true);
   };
 
   return (
@@ -51,9 +81,9 @@ export default function App() {
             <TrafficVideoPanel avenue="B" />
             <SimulationControl onReset={reset} />
           </> : <>
-            <VideoSourcePanel avenue="A" asset={videos.A} status={videoStatus} onSelect={(file) => selectVideo('A', file)} />
-            <VideoSourcePanel avenue="B" asset={videos.B} status={videoStatus} onSelect={(file) => selectVideo('B', file)} />
-            <VideoAnalysisControls canAnalyze={Boolean(videos.A && videos.B)} status={videoStatus} onAnalyze={() => setVideoStatus('ANALYZING')} onReset={reset} />
+            <VideoSourcePanel avenue="A" asset={videos.A} status={videoStatus} result={results.A} onSelect={(file) => selectVideo('A', file)} />
+            <VideoSourcePanel avenue="B" asset={videos.B} status={videoStatus} result={results.B} onSelect={(file) => selectVideo('B', file)} />
+            <VideoAnalysisControls canAnalyze={Boolean(videos.A && videos.B)} status={videoStatus} canStart={Boolean(results.A && results.B)} onAnalyze={analyzeVideos} onStart={startVideoSimulation} onReset={reset} />
           </>}
         </aside>
 
