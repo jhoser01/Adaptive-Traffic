@@ -36,9 +36,24 @@ class VideoAnalyzer:
         print(f"[Vision] model: {self.model_path.resolve() if self.model_path.exists() else self.model_path} (fallback/download if absent)", flush=True)
         self.model = YOLO(str(self.model_path))
 
+    def _reset_tracker(self) -> None:
+        """Discard Ultralytics' predictor/tracker state while retaining loaded weights.
+
+        ``persist=True`` is intentionally kept for consecutive frames in one
+        video. Ultralytics stores ByteTrack state on its predictor, so clearing
+        only our local counters would not isolate independent video streams.
+        Dropping the predictor makes the next ``track`` call create a fresh
+        predictor and tracker, without reloading the YOLO weights held by the
+        model instance.
+        """
+        if getattr(self.model, "predictor", None) is not None:
+            self.model.predictor = None
+        print("[Vision] tracker reset: new independent video", flush=True)
+
     def analyze(self, input_path: Path, output_dir: Path, direction: str = "down") -> dict[str, object]:
         if direction not in {"down", "up", "left", "right"}:
             raise ValueError("direction debe ser down, up, left o right")
+        self._reset_tracker()
         capture = cv2.VideoCapture(str(input_path))
         if not capture.isOpened():
             raise ValueError("No fue posible abrir el video cargado.")
