@@ -1,0 +1,16 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root {
+  --bg-primary:#10191F; --bg-secondary:#17272F; --surface:#1B2D36; --surface-raised:#223740; --surface-soft:#17272F;
+  --header:#122A33; --border:rgba(255,255,255,.08); --border-soft:rgba(255,255,255,.05);
+  --text-primary:#F2F6F7; --text-secondary:#A8BAC1; --text-dim:#738A94;
+  --avenue-a:#1CB7A7; --avenue-b:#4D82E8; --warm:#D8A542;
+  --signal-green:#2FC66D; --signal-yellow:#F0B83F; --signal-red:#E85050;
+  --font-ui:'Inter',system-ui,sans-serif; font-variant-numeric:tabular-nums;
+}
+html,body,#root { width:100%; height:100%; overflow:hidden; background:var(--bg-primary); color:var(--text-primary); font-family:var(--font-ui); font-size:14px; -webkit-font-smoothing:antialiased; }
+button { font:inherit; }
+::-webkit-scrollbar { width:4px; height:4px; }
+::-webkit-scrollbar-thumb { background:rgba(168,183,190,.26); border-radius:4px; }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.45} }
