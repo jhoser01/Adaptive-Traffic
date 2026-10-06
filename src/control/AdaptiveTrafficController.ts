@@ -13,8 +13,9 @@ export interface ControllerState { phase: Phase; phaseTimeRemaining: number; gre
 const clamp = (value: number) => Math.min(MAX_GREEN, Math.max(MIN_GREEN, value));
 
 /**
- * Traffic-responsive proportional split. Arrival rates already come from a
- * moving event window, and this allocation is committed only at a new green.
+ * Traffic-responsive proportional split. The allocation uses the arrival rates
+ * supplied by the active traffic source and is committed only when a new green
+ * phase begins.
  */
 export function calculateGreenAllocation(arrivalRateA: number, arrivalRateB: number): GreenAllocation {
   const qA = Math.max(0, arrivalRateA);

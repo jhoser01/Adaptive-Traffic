@@ -1,6 +1,5 @@
 // ============================================================
-// QUEUE VISUALIZATION v2
-// Bar visualization instead of tiny line chart
+// QUEUE VISUALIZATION
 // ============================================================
 
 import { useTrafficStore } from '../../../store/trafficStore';

@@ -1,9 +1,7 @@
 // ============================================================
-// VIDEO TRAFFIC PROVIDER (stub)
-// Placeholder for future YOLO integration
+// VIDEO TRAFFIC PROVIDER
+// Receives traffic demand derived from the video-analysis pipeline.
 // ============================================================
-// When ready, replace MockTrafficProvider with this class.
-// The architecture requires NO changes to controller, store, or UI.
 
 import type { TrafficProvider } from './TrafficProvider';
 import type { TrafficMetrics, TrafficLevel } from '../types/traffic';
@@ -14,19 +12,19 @@ export class VideoTrafficProvider implements TrafficProvider {
     B: null,
   };
 
-  // Called by the Python bridge (e.g., WebSocket) when YOLO produces metrics
+  // Stores the metrics produced by the video-analysis pipeline.
   ingestMetrics(avenue: 'A' | 'B', metrics: TrafficMetrics): void {
     this.lastMetrics[avenue] = metrics;
   }
 
+  // Manual demand presets do not apply to the video source.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   setLevel(_avenue: 'A' | 'B', _level: TrafficLevel): void {
-    // Video provider ignores manual level overrides
   }
 
+  // Video metrics are updated when a new analysis result arrives.
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   tick(_dt: number): void {
-    // Video provider is push-based, not tick-based
   }
 
   getMetrics(avenue: 'A' | 'B'): TrafficMetrics {

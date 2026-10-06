@@ -1,5 +1,5 @@
 // ============================================================
-// HEADER v2 — Clean, professional, less uppercase/cyan
+// APPLICATION HEADER
 // ============================================================
 
 import { useTrafficStore } from '../../store/trafficStore';

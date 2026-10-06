@@ -1,6 +1,5 @@
 // ============================================================
-// LIGHTING v2 — Brighter, readable scene
-// Technology + night atmosphere, NOT a dark room
+// SCENE LIGHTING
 // ============================================================
 
 import { useRef } from 'react';

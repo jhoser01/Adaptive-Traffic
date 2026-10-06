@@ -5,6 +5,7 @@ dist-ssr/
 .vite/
 coverage/
 scripts/.build/
+.runtime/
 
 # Environment and secrets
 .env
@@ -28,8 +29,9 @@ venv/
 env/
 
 # IDE and OS
-.vscode/
+.vscode/*
 !.vscode/extensions.json
+!.vscode/tasks.json
 .idea/
 .DS_Store
 Thumbs.db
@@ -41,6 +43,7 @@ desktop.ini
 *.sw?
 
 # Logs
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -52,8 +55,12 @@ lerna-debug.log*
 *.tmp
 *.temp
 *.cache
+caches/
+.cache/
+adaptive-traffic-review*.zip
 
 # Uploads and generated analysis outputs
+videos/
 backend/uploads/*
 !backend/uploads/.gitkeep
 backend/outputs/*

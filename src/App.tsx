@@ -31,7 +31,10 @@ export default function App() {
   const { reset } = useSimulationLoop();
   const [tab, setTab] = useState<DashboardTab>('charts');
   const dataSource = useTrafficStore((s) => s.dataSource);
+  const config = useTrafficStore((s) => s.config);
+  const setConfig = useTrafficStore((s) => s.setConfig);
   const setVideoSimulationStarted = useTrafficStore((s) => s.setVideoSimulationStarted);
+  const videoSimulationStarted = useTrafficStore((s) => s.videoSimulationStarted);
   const [videos, setVideos] = useState<Record<AvenueId, VideoAsset | null>>({ A: null, B: null });
   const [results, setResults] = useState<Record<AvenueId, VideoAnalysisResult | null>>({ A: null, B: null });
   const [videoStatus, setVideoStatus] = useState<VideoPanelStatus>('EMPTY');
@@ -82,6 +85,7 @@ export default function App() {
     videoTrafficProvider.ingestMetrics('A', { timestamp: Date.now(), vehiclesInZone: 0, arrivalRate: results.A.arrival_rate, normalizedDensity: 0, stoppedRatio: 0, congestionIndex: 0 });
     videoTrafficProvider.ingestMetrics('B', { timestamp: Date.now(), vehiclesInZone: 0, arrivalRate: results.B.arrival_rate, normalizedDensity: 0, stoppedRatio: 0, congestionIndex: 0 });
     reset();
+    setConfig({ running: true });
     setVideoSimulationStarted(true);
   };
 
@@ -99,7 +103,7 @@ export default function App() {
           </> : <>
             <VideoSourcePanel avenue="A" asset={videos.A} status={videoStatus} result={results.A} error={videoError} onSelect={(file) => selectVideo('A', file)} onDirectionChange={(direction) => changeDirection('A', direction)} />
             <VideoSourcePanel avenue="B" asset={videos.B} status={videoStatus} result={results.B} error={videoError} onSelect={(file) => selectVideo('B', file)} onDirectionChange={(direction) => changeDirection('B', direction)} />
-            <VideoAnalysisControls canAnalyze={Boolean(videos.A && videos.B)} status={videoStatus} canStart={Boolean(results.A && results.B)} message={videoError ?? analysisMessage ?? undefined} onAnalyze={analyzeVideos} onStart={startVideoSimulation} onReset={reset} />
+            <VideoAnalysisControls canAnalyze={Boolean(videos.A && videos.B)} status={videoStatus} canStart={Boolean(results.A && results.B)} running={config.running} simulationStarted={videoSimulationStarted} message={videoError ?? analysisMessage ?? undefined} onAnalyze={analyzeVideos} onStart={startVideoSimulation} onTogglePause={() => setConfig({ running: !config.running })} onReset={reset} />
           </>}
         </aside>
 
@@ -143,7 +147,7 @@ export default function App() {
                 <PhaseTimeline />
               )}
 
-              {/* Always-visible AI Decision */}
+              {/* Adaptive control panel */}
               <AIDecisionPanel />
             </div>
           </div>

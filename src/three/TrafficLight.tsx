@@ -1,6 +1,5 @@
 // ============================================================
-// TRAFFIC LIGHT 3D v2
-// Cleaner housing, better scale, labelVisible prop for duplicates
+// 3D TRAFFIC LIGHT
 // ============================================================
 
 import { useRef } from 'react';

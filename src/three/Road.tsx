@@ -1,5 +1,5 @@
 // ============================================================
-// ROAD v2 — Longer avenues, better contrast, visible markings
+// ROAD GEOMETRY
 // ============================================================
 
 import { useMemo } from 'react';
@@ -7,9 +7,8 @@ import type { ReactElement } from 'react';
 import * as THREE from 'three';
 import { Text } from '@react-three/drei';
 
-// Wider, longer road for HIGH traffic visibility
-export const ROAD_WIDTH = 8;        // slightly wider
-export const ROAD_LENGTH = 46;      // was 30 — longer approach zones
+export const ROAD_WIDTH = 8;
+export const ROAD_LENGTH = 46;
 export const ROAD_HALF = ROAD_LENGTH / 2;
 const ROAD_Y = 0;
 const SIDEWALK_H = 0.18;

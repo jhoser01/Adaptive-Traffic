@@ -1,181 +1,193 @@
-# Adaptive Traffic AI
-### Smart Intersection Control — MVP v1.0
+# Adaptive Traffic
 
-A real-time 3D traffic simulation system with an adaptive signal controller and a premium cinematic interface.
+Prototipo de control semafórico adaptativo mediante visión artificial y gemelo digital.
 
----
+Adaptive Traffic representa una intersección de dos aproximaciones en un entorno 3D. El sistema combina una simulación vehicular, un controlador adaptativo y un backend que analiza videos de tráfico para estimar la demanda de cada avenida.
 
-## 🚀 Quick Start
+Es un proyecto personal y una prueba de concepto. La visión artificial funciona como un sensor virtual: entrega métricas de tráfico al sistema, mientras que el controlador semafórico aplica las reglas de operación y la máquina de estados segura.
 
-```bash
-npm install
-npm run dev
-```
+## Problema
 
-Open **http://localhost:5173** in your browser.
+La demanda vehicular cambia con el tiempo y entre aproximaciones. Un control semafórico que no responda a esas variaciones puede producir tiempos de espera innecesarios y una distribución poco equilibrada del tiempo verde.
 
----
+## Objetivo
 
-## 🏗 Architecture
+El objetivo es explorar una estrategia adaptativa en una intersección simulada. La IA no toma directamente decisiones semafóricas: YOLO11n y ByteTrack producen observaciones sobre el tráfico, y el controlador usa la tasa de llegada estimada para calcular la siguiente asignación de verde.
 
-```
-src/
-├── types/
-│   └── traffic.ts              # Core data contracts
-├── providers/
-│   ├── TrafficProvider.ts      # Interface
-│   ├── MockTrafficProvider.ts  # Simulated demand target (current)
-│   └── VideoTrafficProvider.ts # Stub for YOLO integration
-├── simulation/
-│   ├── CongestionModel.ts      # D, S, IC and moving-arrival equations
-│   ├── VehicleAgent.ts         # Individual vehicle physics
-│   ├── QueueModel.ts           # Queue counter
-│   └── TrafficSimulation.ts   # Main simulation orchestrator
-├── control/
-│   ├── TrafficSignalStateMachine.ts  # Phase transitions
-│   └── AdaptiveTrafficController.ts  # Green time calculator
-├── store/
-│   └── trafficStore.ts         # Zustand global state
-├── hooks/
-│   └── useSimulationLoop.ts    # RAF simulation loop
-├── three/
-│   ├── IntersectionScene.tsx   # R3F Canvas
-│   ├── Road.tsx                # Intersection geometry
-│   ├── TrafficLight.tsx        # 3D signal with bloom
-│   ├── Vehicle.tsx             # Low-poly Car/SUV/Truck
-│   ├── RouteDefinitions.ts     # Route, direction and signal-group source of truth
-│   ├── VehicleSpawner.tsx      # Route-derived vehicle renderer
-│   ├── CameraRig.tsx           # Cinematic camera
-│   └── Lighting.tsx            # Scene lighting
-└── components/
-    ├── Header/
-    ├── TrafficVideoPanel/
-    ├── KPICard/
-    ├── AIDecisionPanel/
-    ├── SimulationControl/
-    └── charts/
-        ├── CongestionChart/
-        ├── QueueChart/
-        └── PhaseTimeline/
-```
+## Qué construí
 
----
+- Gemelo digital 3D de una intersección.
+- Simulación vehicular con demanda baja, media y alta.
+- Máquina de estados con transiciones seguras entre fases.
+- Controlador adaptativo basado en la demanda medida.
+- Backend de visión artificial con FastAPI.
+- Detección de vehículos con YOLO11n.
+- Seguimiento de identidades con ByteTrack.
+- Línea virtual de conteo configurable por dirección.
+- Cálculo de tasa de llegada e índice de congestión en el gemelo digital.
+- Integración del flujo Video IA → gemelo digital.
 
-## 🧠 Controller Logic
-
-**Signal Phase Sequence:**
-```
-A_GREEN → A_YELLOW → ALL_RED → B_GREEN → B_YELLOW → ALL_RED → (repeat)
-```
-
-**Green Time Formula:**
-```
-qTotal = qA + qB
-rA = qA / qTotal
-greenA = MIN_GREEN + (MAX_GREEN − MIN_GREEN) × rA
-```
-
-**Constraints:** `MIN_GREEN = 8s`, `MAX_GREEN = 30s`, `YELLOW = 3s`, `ALL_RED = 1s`
-
----
-
-## 🧪 Test Scenarios
-
-| Test | A Level | B Level | Expected |
-|------|---------|---------|---------|
-| 1 | HIGH | LOW | A gets longer green |
-| 2 | LOW | HIGH | B gets longer green |
-| 3 | MEDIUM | MEDIUM | Similar green times |
-| 4 | HIGH | HIGH | Balanced, queues visible |
-| 5 | LOW | LOW | Near-minimum greens |
-
----
-
-## 🎥 Video IA (YOLO + ByteTrack)
-
-El selector `Video IA` conserva los dos módulos 16:9 existentes: `VIDEO AVENIDA A` y `VIDEO AVENIDA B`. Al cargar ambos archivos y pulsar **Analizar videos**, cada archivo se envía al backend FastAPI. YOLO11n detecta vehículos y ByteTrack mantiene IDs persistentes; el video resultante incluye cajas, clase, ID y línea virtual de conteo. La interfaz muestra conteo, tasa de llegada y desglose por clase.
-
-La conexión futura queda separada del gemelo digital:
+## Arquitectura
 
 ```text
-video Avenida A/B → YOLO + Tracking → TrafficMetrics → AdaptiveTrafficController → Digital Twin
+Video A / Video B
+        ↓
+YOLO11n
+        ↓
+ByteTrack
+        ↓
+Conteo y tasa de llegada
+        ↓
+Controlador adaptativo
+        ↓
+Gemelo digital
 ```
 
-Los videos son sensores de entrada, no una réplica uno-a-uno de los vehículos renderizados. Tras analizar ambos videos, **Iniciar simulación** entrega sus tasas de llegada a `VideoTrafficProvider`; el controlador existente reparte los verdes y el gemelo genera demanda equivalente.
+Los vehículos del gemelo digital representan tráfico equivalente a las métricas observadas. No son copias uno-a-uno de los vehículos que aparecen en los videos.
 
-### Ejecutar la visión artificial local
+## Modos
 
-En una terminal, iniciar el backend:
+### Simulación
+
+Permite probar escenarios de demanda Baja, Media y Alta sin cargar videos externos.
+
+### Video IA
+
+Permite cargar un video para cada avenida, analizarlos con el backend y utilizar las tasas de llegada resultantes como entrada del gemelo digital.
+
+## Visión artificial
+
+YOLO11n detecta las clases de vehículos seleccionadas. ByteTrack mantiene la identidad de cada objeto entre fotogramas. Una línea virtual registra los cruces en la dirección configurada y calcula la tasa de llegada:
+
+```text
+q = N / Δt × 60   [veh/min]
+```
+
+El resultado `vehicle_count` corresponde a los vehículos que cruzaron la línea de conteo. El número de detecciones por fotograma no equivale al número de vehículos.
+
+El análisis acepta videos `.mp4`, `.mov`, `.avi` y `.mkv`, y procesa como máximo 60 segundos por video en la demo.
+
+## Control adaptativo
+
+La asignación del siguiente verde usa las tasas de llegada de ambas aproximaciones:
+
+```text
+qTotal = qA + qB
+ri = qi / qTotal
+Gi = Gmin + (Gmax - Gmin)ri
+```
+
+Si no hay demanda medida, ambas aproximaciones reciben el verde mínimo. En este MVP los parámetros son:
+
+| Parámetro | Valor |
+| --- | ---: |
+| `Gmin` | 8 s |
+| `Gmax` | 30 s |
+| Amarillo | 3 s |
+| Todo-rojo | 1 s |
+
+Son parámetros del prototipo, no normativa universal ni valores certificados para una intersección real.
+
+## Congestión estimada
+
+La interfaz muestra un índice normalizado construido a partir de la densidad y la proporción de vehículos detenidos:
+
+```text
+D = vehiclesInZone / referenceCapacity
+S = stoppedVehicles / vehiclesInZone   (si vehiclesInZone > 0; en otro caso, 0)
+IC = (D + S) / 2
+```
+
+El índice se acota y se interpreta dentro del modelo del MVP. No es una medida oficial de nivel de servicio ni reemplaza un estudio de tránsito.
+
+## Stack
+
+Frontend:
+
+- React
+- TypeScript
+- Vite
+- Three.js / React Three Fiber
+- Zustand
+- Recharts
+
+Backend:
+
+- Python
+- FastAPI
+- Ultralytics YOLO11n
+- ByteTrack
+- OpenCV
+- FFmpeg
+- PyTorch
+
+## Instalación
+
+### Ejecución rápida en Windows
+
+Desde la raíz del repositorio:
+
+1. Ejecuta `INSTALAR.bat` para preparar Python, el entorno virtual, las dependencias y el frontend.
+2. Ejecuta `INICIAR.bat` para iniciar backend y frontend.
+3. Ejecuta `DETENER.bat` para cerrar los servicios iniciados por el proyecto.
+
+El modelo `yolo11n.pt` se busca en `backend/models/`. Si no está disponible, Ultralytics puede descargarlo durante el primer análisis; el archivo está excluido de Git por su tamaño.
+
+### Instalación manual
+
+Backend, desde la raíz del proyecto:
 
 ```powershell
+py -3.11 -m venv backend\.venv
+backend\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 backend\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload --port 8001
 ```
 
-En otra, iniciar el frontend:
+Frontend, en otra terminal:
 
 ```powershell
+npm ci
 npm run dev
 ```
 
-Abrir `http://localhost:5173`, seleccionar **Video IA**, subir un video para cada avenida, pulsar **Analizar videos** y finalmente **Iniciar simulación**. Ver [backend/README.md](backend/README.md) para el contrato del endpoint.
+La interfaz queda disponible en `http://localhost:5173` y la API local en `http://127.0.0.1:8001`. El contrato del backend está resumido en [backend/README.md](backend/README.md).
 
-## 🔮 Integración futura
+## Estado del proyecto
 
-To integrate YOLO video detection, replace `MockTrafficProvider` with `VideoTrafficProvider`:
+### IMPLEMENTADO
 
-```typescript
-// When YOLO + tracking sends measured metrics via WebSocket:
-videoProvider.ingestMetrics('A', {
-  timestamp: Date.now(),
-  vehiclesInZone: 12,
-  arrivalRate: 14.2,
-  normalizedDensity: 0.60,
-  stoppedRatio: 0.55,
-  congestionIndex: 0.575,
-});
-```
+- Simulación vehicular.
+- Control adaptativo.
+- Detección YOLO.
+- Tracking con ByteTrack.
+- Conteo mediante línea virtual.
+- Video procesado con anotaciones.
+- Integración del flujo de visión con el gemelo digital.
 
-El controlador, store y UI consumen el mismo contrato de métricas sin conocer si la fuente es simulación o video.
+### FUERA DEL ALCANCE ACTUAL
 
----
+- Control de semáforos físicos.
+- Despliegue urbano.
+- Coordinación multi-intersección.
+- Infraestructura Edge/Cloud real.
+- Ciberseguridad operacional.
 
-## 📦 Tech Stack
+## Documentación
 
-- **React 19** + **TypeScript** + **Vite**
-- **Three.js** + **@react-three/fiber** + **@react-three/drei**
-- **@react-three/postprocessing** (Bloom)
-- **Zustand** (state management)
-- **Recharts** (charts)
+- [Modelo matemático](docs/modelo-matematico.md)
+- [Fundamento técnico y referencias](docs/fundamento-tecnico.md)
 
----
+## Limitaciones
 
-## 🎨 Design System
+- MVP de una intersección.
+- Dos aproximaciones controladas.
+- Videos pregrabados.
+- Máximo de 60 segundos por análisis en la demo.
+- Parámetros de control simplificados.
+- No es un controlador certificado para uso vial real.
 
-| Token | Value | Usage |
-|-------|-------|-------|
-| `--bg-primary` | `#10191F` | Application background |
-| `--surface` | `#1B2D36` | Primary panel |
-| `--header` | `#122A33` | Header surface |
-| `--avenue-a` | `#1CB7A7` | Avenue A |
-| `--avenue-b` | `#4D82E8` | Avenue B |
-| `--signal-green` | `#2FC66D` | Traffic green |
-| `--signal-yellow` | `#F0B83F` | Traffic yellow |
-| `--signal-red` | `#DF4C4C` | Traffic red |
+## Autor
 
-## Runtime connection audit (current implementation)
+Jhoser Simeon
 
-`MockTrafficProvider` entrega únicamente `targetArrivalRate` para cada preset de demanda. No inventa presencia, detención ni congestión. `TrafficSimulation` mide esas variables desde el gemelo digital.
-
-`TrafficSimulation` usa `targetArrivalRate` como entrada del spawner. `vehiclesInZone`, `stoppedRatio`, `normalizedDensity`, `congestionIndex` y `arrivalRate` son salidas medidas. La tasa cuenta eventos reales de spawn dentro de una ventana móvil; no muestra el objetivo del preset.
-
-Cada spawn también registra su tiempo simulado. `getArrivalBins()` mantiene una ventana móvil de 60 segundos y genera 12 intervalos de 5 segundos, ordenados del más antiguo al más reciente. Las barras de “Llegadas — últimos 60 s” representan exclusivamente esos eventos reales. El mismo contrato queda disponible para que `VideoTrafficProvider` lo alimente en el futuro con entradas detectadas por visión.
-
-`AdaptiveTrafficController` reparte el siguiente verde según las tasas de llegada medidas relativas y solo confirma esa asignación al iniciar una nueva fase verde. `TrafficSignalStateMachine` es la autoridad de fases y aplica `A_GREEN → A_YELLOW → ALL_RED_AB → B_GREEN → B_YELLOW → ALL_RED_BA`.
-
-`RouteDefinitions` is the single source of truth for the two MVP routes: `ROUTE_A` (west → east on world X) and `ROUTE_B` (positive Z → negative Z on world Z). Vehicle yaw is derived from the route forward vector; the renderer has no independent per-vehicle direction convention. Each route also owns its stop line, spawn point, exit point, and signal group.
-
-Set `?debugTraffic=1` in the browser URL to temporarily show route IDs, motion arrows, and queued state for visual orientation checks.
-
-Run `npm run test:simulation` to validate route geometry, vehicle orientation, stop-line behavior, safe phase order, and LOW/MEDIUM/HIGH spawn rates.
-
-La explicación completa, ecuaciones, parámetros y ejemplo numérico están en [docs/modelo-matematico.md](docs/modelo-matematico.md). La auditoría anterior al reemplazo está en [docs/modelo-control.md](docs/modelo-control.md) y las referencias conceptuales en [docs/fundamento-tecnico.md](docs/fundamento-tecnico.md).
+Proyecto personal orientado a visión artificial, simulación y sistemas inteligentes de transporte.

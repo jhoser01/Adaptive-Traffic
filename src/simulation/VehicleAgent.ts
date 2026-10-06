@@ -1,6 +1,5 @@
 // ============================================================
-// VEHICLE AGENT v2
-// Better car-following, queue formation, signal compliance
+// VEHICLE AGENT
 // ============================================================
 
 import type { AvenueId, SignalColor } from '../types/traffic';

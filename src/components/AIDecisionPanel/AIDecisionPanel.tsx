@@ -1,6 +1,5 @@
 // ============================================================
-// ADAPTIVE CONTROL PANEL v2
-// Renamed from "AI Decision" — rule-based, honest labeling
+// ADAPTIVE CONTROL PANEL
 // ============================================================
 
 import { useTrafficStore } from '../../store/trafficStore';

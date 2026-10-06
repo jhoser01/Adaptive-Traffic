@@ -1,6 +1,5 @@
 // ============================================================
-// VEHICLE 3D - Low-poly procedural vehicles v2
-// Better colors for visibility, improved proportions
+// PROCEDURAL LOW-POLY VEHICLE
 // ============================================================
 
 type VehicleType = 'CAR' | 'SUV' | 'TRUCK';

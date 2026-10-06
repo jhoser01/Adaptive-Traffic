@@ -1,6 +1,5 @@
 // ============================================================
-// TRAFFIC INPUT PANEL v2
-// Less HUD-sci-fi, more professional sensor display
+// TRAFFIC INPUT PANEL
 // ============================================================
 
 import { useTrafficStore } from '../../store/trafficStore';

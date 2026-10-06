@@ -1,6 +1,6 @@
 // ============================================================
 // TRAFFIC TYPES
-// Core data contracts for the Adaptive Traffic AI system
+// Core data contracts for Adaptive Traffic
 // ============================================================
 
 export type AvenueId = 'A' | 'B';
@@ -13,7 +13,7 @@ export interface TrafficMetrics {
   // Simulation-only demand input. Video IA supplies measured arrivalRate and
   // does not need to provide an artificial target.
   targetArrivalRate?: number;
-  arrivalRate: number;       // measured over the moving arrival-events window, veh/min
+  arrivalRate: number;       // arrival demand in veh/min; measurement method depends on data source
   normalizedDensity: number; // 0..1, prototype ROI normalization
   stoppedRatio: number;      // 0..1, vehicles stopped for the configured minimum duration
   congestionIndex: number;  // 0..1, prototype index: (normalizedDensity + stoppedRatio) / 2

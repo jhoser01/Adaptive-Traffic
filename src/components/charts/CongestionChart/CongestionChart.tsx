@@ -1,6 +1,5 @@
 // ============================================================
-// CONGESTION CHART v2
-// Clean line chart for main dashboard view
+// CONGESTION CHART
 // ============================================================
 
 import {

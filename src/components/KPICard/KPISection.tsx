@@ -1,5 +1,5 @@
 // ============================================================
-// KPI SECTION v2 — Cleaner, no fake metrics
+// KPI SECTION
 // ============================================================
 
 import { useTrafficStore } from '../../store/trafficStore';

@@ -1,5 +1,5 @@
 // ============================================================
-// INTERSECTION SCENE v2 — Better framing, tone mapping
+// INTERSECTION SCENE
 // ============================================================
 
 import { Suspense } from 'react';

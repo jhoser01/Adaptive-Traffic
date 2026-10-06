@@ -1,5 +1,5 @@
 // ============================================================
-// CAMERA RIG v2 — Closer framing, cinematic idle orbit
+// CAMERA RIG
 // ============================================================
 
 import { useFrame, useThree } from '@react-three/fiber';

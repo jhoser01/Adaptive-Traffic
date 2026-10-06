@@ -39,9 +39,9 @@
 .video-file-state span,.video-file-state small { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .video-file-state span { color:var(--text-primary); font-size:10px; }
 .video-file-state small { margin-top:3px; color:var(--text-dim); font-size:9px; }
-.video-placeholder-metrics { display:grid; grid-template-columns:1fr 1fr; gap:5px 10px; margin-top:10px; color:var(--text-dim); font-size:9px; }
-.video-placeholder-metrics span { display:flex; justify-content:space-between; gap:8px; }
-.video-placeholder-metrics b { color:var(--text-secondary); font-weight:600; }
+.video-metrics { display:grid; grid-template-columns:1fr 1fr; gap:5px 10px; margin-top:10px; color:var(--text-dim); font-size:9px; }
+.video-metrics span { display:flex; justify-content:space-between; gap:8px; }
+.video-metrics b { color:var(--text-secondary); font-weight:600; }
 .vision-overlay { position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; gap:3px; padding:10px; background:linear-gradient(transparent,rgba(9,18,22,.78)); color:#fff; font-size:10px; }
 .vision-overlay small { color:rgba(255,255,255,.7); font-size:9px; }
 .video-analysis-controls { padding:14px 16px; background:var(--surface); }
@@ -52,7 +52,7 @@
 .chart-area { position:relative; }
 @media (max-width:1050px) { .left-panel.mode-video { width:360px; min-width:320px; } }
 
-/* Definitive premium dark theme surfaces */
+/* Dashboard surfaces */
 .scene-label { background:rgba(18,42,51,.88); }
 .scene-container { background:#26383E; }
 .input-congestion-bar,.ai-demand-bar-track { background:rgba(255,255,255,.10); }

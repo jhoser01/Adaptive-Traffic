@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useRef, type DragEvent } from 'react';
 import type { AvenueId } from '../../types/traffic';
 import type { VideoAnalysisResult, VideoAsset, VideoPanelStatus } from '../../types/video';
 import { VisionOverlay } from '../VisionOverlay/VisionOverlay';
@@ -17,6 +17,14 @@ interface Props {
 export function VideoSourcePanel({ avenue, asset, status, result, error, onSelect, onDirectionChange }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const accent = avenue === 'A' ? 'var(--avenue-a)' : 'var(--avenue-b)';
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+  };
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    const file = event.dataTransfer.files[0];
+    if (file) onSelect(file);
+  };
 
   return (
     <section className="video-source-panel" style={{ borderTopColor: accent }}>
@@ -34,10 +42,10 @@ export function VideoSourcePanel({ avenue, asset, status, result, error, onSelec
             <VisionOverlay status={status} />
           </>
         ) : (
-          <div className="video-dropzone">
+          <div className="video-dropzone" onDragOver={handleDragOver} onDrop={handleDrop}>
             <span className="upload-symbol">↑</span>
             <strong>Arrastra un video aquí</strong>
-            <span>MP4, MOV o AVI · formato 16:9 recomendado</span>
+            <span>MP4, MOV, AVI o MKV · formato 16:9 recomendado</span>
           </div>
         )}
       </div>
@@ -47,7 +55,7 @@ export function VideoSourcePanel({ avenue, asset, status, result, error, onSelec
           <small>{asset ? (status === 'ANALYZING' ? `Analizando Avenida ${avenue}...` : result ? 'Video procesado con YOLO + ByteTrack' : `${Math.max(1, Math.round(asset.size / 1024))} KB · Pendiente de análisis`) : 'El video funciona como sensor de entrada'}</small>
         </div>
         <button className="action-btn" onClick={() => inputRef.current?.click()}>{asset ? 'Cambiar' : 'Subir video'}</button>
-        <input ref={inputRef} type="file" hidden accept="video/mp4,video/quicktime,video/x-msvideo" onChange={(e) => {
+        <input ref={inputRef} type="file" hidden accept="video/mp4,video/quicktime,video/x-msvideo,video/x-matroska,.mkv" onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) onSelect(file);
           e.currentTarget.value = '';
@@ -62,8 +70,8 @@ export function VideoSourcePanel({ avenue, asset, status, result, error, onSelec
           <option value="right">Derecha</option>
         </select>
       </label>}
-      <div className="video-placeholder-metrics">
-        <span>Vehículos detectados <b>{result?.vehicle_count ?? '--'}</b></span>
+      <div className="video-metrics">
+        <span>Vehículos contados <b>{result?.vehicle_count ?? '--'}</b></span>
         <span>Tasa de llegada <b>{result ? `${result.arrival_rate.toFixed(1)} veh/min` : '--'}</b></span>
         <span>Autos <b>{result?.class_counts.car ?? '--'}</b> · Motos <b>{result?.class_counts.motorcycle ?? '--'}</b></span>
         <span>Buses <b>{result?.class_counts.bus ?? '--'}</b> · Camiones <b>{result?.class_counts.truck ?? '--'}</b></span>

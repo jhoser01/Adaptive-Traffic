@@ -1,0 +1,26 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Adaptive Traffic: Instalar",
+      "type": "shell",
+      "command": "${workspaceFolder}\\INSTALAR.bat",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "close": false }
+    },
+    {
+      "label": "Adaptive Traffic: Iniciar",
+      "type": "shell",
+      "command": "${workspaceFolder}\\INICIAR.bat",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "close": false }
+    },
+    {
+      "label": "Adaptive Traffic: Detener",
+      "type": "shell",
+      "command": "${workspaceFolder}\\DETENER.bat",
+      "problemMatcher": [],
+      "presentation": { "reveal": "always", "panel": "dedicated", "close": false }
+    }
+  ]
+}
