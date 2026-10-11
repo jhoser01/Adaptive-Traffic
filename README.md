@@ -1,193 +1,160 @@
 # Adaptive Traffic
 
-Prototipo de control semafórico adaptativo mediante visión artificial y gemelo digital.
+**Control semafórico adaptativo con visión artificial y gemelo digital 3D.**
 
-Adaptive Traffic representa una intersección de dos aproximaciones en un entorno 3D. El sistema combina una simulación vehicular, un controlador adaptativo y un backend que analiza videos de tráfico para estimar la demanda de cada avenida.
+Prototipo personal que combina análisis de video, simulación de vehículos y un controlador sensible a la demanda en una intersección de dos avenidas. El objetivo es explorar cómo usar tasas de llegada estimadas para distribuir el tiempo de verde; no es un sistema vial certificado.
 
-Es un proyecto personal y una prueba de concepto. La visión artificial funciona como un sensor virtual: entrega métricas de tráfico al sistema, mientras que el controlador semafórico aplica las reglas de operación y la máquina de estados segura.
+**Tecnologías:** React · TypeScript · Three.js / React Three Fiber · Python · FastAPI · YOLO11n · ByteTrack
 
-## Problema
+> **Estado:** MVP local y prueba de concepto. No controla semáforos físicos ni está validado para despliegue urbano.
 
-La demanda vehicular cambia con el tiempo y entre aproximaciones. Un control semafórico que no responda a esas variaciones puede producir tiempos de espera innecesarios y una distribución poco equilibrada del tiempo verde.
+## Vista general
 
-## Objetivo
+| Componente | Función |
+| --- | --- |
+| Gemelo digital 3D | Representa una intersección con dos aproximaciones (avenidas A y B). |
+| Modo Simulación | Genera vehículos virtuales con demanda baja, media o alta. |
+| Modo Video IA | Analiza un video por avenida para estimar tasas de llegada. |
+| Controlador adaptativo | Ajusta la asignación del siguiente verde a partir de la demanda. |
+| Panel de métricas | Presenta llegadas, congestión del gemelo, colas y fases semafóricas. |
 
-El objetivo es explorar una estrategia adaptativa en una intersección simulada. La IA no toma directamente decisiones semafóricas: YOLO11n y ByteTrack producen observaciones sobre el tráfico, y el controlador usa la tasa de llegada estimada para calcular la siguiente asignación de verde.
-
-## Qué construí
-
-- Gemelo digital 3D de una intersección.
-- Simulación vehicular con demanda baja, media y alta.
-- Máquina de estados con transiciones seguras entre fases.
-- Controlador adaptativo basado en la demanda medida.
-- Backend de visión artificial con FastAPI.
-- Detección de vehículos con YOLO11n.
-- Seguimiento de identidades con ByteTrack.
-- Línea virtual de conteo configurable por dirección.
-- Cálculo de tasa de llegada e índice de congestión en el gemelo digital.
-- Integración del flujo Video IA → gemelo digital.
+**Diferencia importante:** en modo Video IA, las métricas de congestión y cola mostradas en la interfaz proceden del **gemelo digital**, no son mediciones directas del video. Los vehículos 3D no son copias uno a uno de los filmados.
 
 ## Arquitectura
 
-```text
-Video A / Video B
-        ↓
-YOLO11n
-        ↓
-ByteTrack
-        ↓
-Conteo y tasa de llegada
-        ↓
-Controlador adaptativo
-        ↓
-Gemelo digital
-```
+~~~mermaid
+flowchart TD
+    S["Simulación<br/>Generador virtual"] --> D["Tasas de llegada A / B"]
+    V["Video IA<br/>Videos pregrabados"] --> Y["YOLO11n<br/>Detección"]
+    Y --> T["ByteTrack<br/>Seguimiento"]
+    T --> C["Cruces de línea virtual<br/>Conteo por ID y dirección"]
+    C --> D
+    D --> K["Controlador adaptativo<br/>Reparto proporcional del verde"]
+    K --> M["Máquina de estados<br/>Verde / amarillo / todo-rojo"]
+    M --> G["Gemelo digital 3D<br/>Visualización y métricas simuladas"]
+~~~
 
-Los vehículos del gemelo digital representan tráfico equivalente a las métricas observadas. No son copias uno-a-uno de los vehículos que aparecen en los videos.
+La visión artificial actúa como **sensor virtual**. YOLO11n detecta vehículos; ByteTrack mantiene identidades entre fotogramas; el conteo registra cruces de la línea virtual. **La IA no decide directamente los estados semafóricos:** entrega datos que usa el controlador.
 
-## Modos
+## Funcionalidades implementadas
 
-### Simulación
+- Simulación vehicular con niveles de demanda variable.
+- Visualización 3D de una intersección.
+- Fases semafóricas A/B con transiciones de amarillo y todo-rojo.
+- Asignación de verde sensible a la tasa de llegada.
+- Procesamiento secuencial de dos videos, uno por avenida.
+- Detección con YOLO11n, seguimiento con ByteTrack y conteo de cruces.
+- Salida de video anotado y panel con indicadores, gráficos y línea de tiempo.
 
-Permite probar escenarios de demanda Baja, Media y Alta sin cargar videos externos.
+### Modos de uso
 
-### Video IA
+**Simulación:** no requiere videos. El gemelo genera los vehículos, las llegadas y las métricas a partir de su propio estado.
 
-Permite cargar un video para cada avenida, analizarlos con el backend y utilizar las tasas de llegada resultantes como entrada del gemelo digital.
+**Video IA:** el usuario carga un video por avenida y configura la dirección de conteo. Tras el análisis, las tasas de llegada obtenidas alimentan el gemelo digital.
 
-## Visión artificial
+## Control y métricas
 
-YOLO11n detecta las clases de vehículos seleccionadas. ByteTrack mantiene la identidad de cada objeto entre fotogramas. Una línea virtual registra los cruces en la dirección configurada y calcula la tasa de llegada:
+### Tasa de llegada
 
-```text
-q = N / Δt × 60   [veh/min]
-```
+~~~text
+q = (N / Δt) × 60   [veh/min]
+~~~
 
-El resultado `vehicle_count` corresponde a los vehículos que cruzaron la línea de conteo. El número de detecciones por fotograma no equivale al número de vehículos.
+En **Simulación**, N es el número de eventos de entrada virtual en el intervalo. En **Video IA**, N es el número de IDs únicos que cruzan la línea de conteo en la dirección configurada. Un ID no se cuenta repetidamente por aparecer en varios fotogramas.
 
-El análisis acepta videos `.mp4`, `.mov`, `.avi` y `.mkv`, y procesa como máximo 60 segundos por video en la demo.
+### Reparto de verde
 
-## Control adaptativo
-
-La asignación del siguiente verde usa las tasas de llegada de ambas aproximaciones:
-
-```text
+~~~text
 qTotal = qA + qB
 ri = qi / qTotal
-Gi = Gmin + (Gmax - Gmin)ri
-```
+Gi = Gmin + (Gmax - Gmin) × ri
+~~~
 
-Si no hay demanda medida, ambas aproximaciones reciben el verde mínimo. En este MVP los parámetros son:
+Si no hay demanda medida, ambos verdes toman el mínimo. La asignación se actualiza **al comenzar una nueva fase verde**, no durante un verde que ya está transcurriendo.
 
-| Parámetro | Valor |
+| Parámetro del MVP | Valor |
 | --- | ---: |
-| `Gmin` | 8 s |
-| `Gmax` | 30 s |
+| Verde mínimo | 8 s |
+| Verde máximo | 30 s |
 | Amarillo | 3 s |
 | Todo-rojo | 1 s |
 
-Son parámetros del prototipo, no normativa universal ni valores certificados para una intersección real.
+Los valores son parámetros de demostración; no equivalen a tiempos certificados ni a normativa universal.
 
-## Congestión estimada
+### Congestión del gemelo digital
 
-La interfaz muestra un índice normalizado construido a partir de la densidad y la proporción de vehículos detenidos:
-
-```text
-D = vehiclesInZone / referenceCapacity
-S = stoppedVehicles / vehiclesInZone   (si vehiclesInZone > 0; en otro caso, 0)
+~~~text
+D = clamp(vehiclesInZone / referenceCapacity, 0, 1)
+S = stoppedVehicles / vehiclesInZone  (si hay vehículos; en otro caso, 0)
 IC = (D + S) / 2
-```
+~~~
 
-El índice se acota y se interpreta dentro del modelo del MVP. No es una medida oficial de nivel de servicio ni reemplaza un estudio de tránsito.
+IC es un índice normalizado del prototipo, no una medida oficial de nivel de servicio. La tasa de llegada se usa para calcular el reparto del verde, **no** entra directamente en IC. Las definiciones y supuestos se desarrollan en el [modelo matemático](docs/modelo-matematico.md).
 
-## Stack
+## Instalación y ejecución local
 
-Frontend:
-
-- React
-- TypeScript
-- Vite
-- Three.js / React Three Fiber
-- Zustand
-- Recharts
-
-Backend:
-
-- Python
-- FastAPI
-- Ultralytics YOLO11n
-- ByteTrack
-- OpenCV
-- FFmpeg
-- PyTorch
-
-## Instalación
-
-### Ejecución rápida en Windows
+### Opción rápida (Windows)
 
 Desde la raíz del repositorio:
 
-1. Ejecuta `INSTALAR.bat` para preparar Python, el entorno virtual, las dependencias y el frontend.
-2. Ejecuta `INICIAR.bat` para iniciar backend y frontend.
-3. Ejecuta `DETENER.bat` para cerrar los servicios iniciados por el proyecto.
+1. Ejecutar **INSTALAR.bat** para preparar dependencias y entorno.
+2. Ejecutar **INICIAR.bat** para iniciar frontend y backend.
+3. Ejecutar **DETENER.bat** para detener los servicios.
 
-El modelo `yolo11n.pt` se busca en `backend/models/`. Si no está disponible, Ultralytics puede descargarlo durante el primer análisis; el archivo está excluido de Git por su tamaño.
+El analizador busca el modelo yolo11n.pt en backend/models. Si no está disponible, Ultralytics puede descargarlo al inicializarse.
 
-### Instalación manual
+### Opción manual (Windows)
 
-Backend, desde la raíz del proyecto:
+**Backend** (requiere Python 3.11):
 
-```powershell
+~~~powershell
 py -3.11 -m venv backend\.venv
 backend\.venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 backend\.venv\Scripts\python.exe -m uvicorn backend.app:app --reload --port 8001
-```
+~~~
 
-Frontend, en otra terminal:
+**Frontend**, en otra terminal (requiere Node.js y npm compatibles con Vite):
 
-```powershell
+~~~powershell
 npm ci
 npm run dev
-```
+~~~
 
-La interfaz queda disponible en `http://localhost:5173` y la API local en `http://127.0.0.1:8001`. El contrato del backend está resumido en [backend/README.md](backend/README.md).
+- Frontend de desarrollo: http://localhost:5173 (Vite puede elegir otro puerto).
+- API local: http://127.0.0.1:8001.
+- Comprobación del servicio: **GET /health**.
 
-## Estado del proyecto
+Para Video IA, el backend debe estar activo. Se aceptan videos MP4, MOV, AVI y MKV; la demo analiza como máximo **60 segundos por video**. Más información en la [documentación del backend](backend/README.md).
 
-### IMPLEMENTADO
+### Comprobaciones disponibles
 
-- Simulación vehicular.
-- Control adaptativo.
-- Detección YOLO.
-- Tracking con ByteTrack.
-- Conteo mediante línea virtual.
-- Video procesado con anotaciones.
-- Integración del flujo de visión con el gemelo digital.
+~~~powershell
+npm run build
+npm run lint
+npm run test:simulation
+~~~
 
-### FUERA DEL ALCANCE ACTUAL
+Estos comandos están definidos en el proyecto, pero **no se ejecutaron** como parte de esta actualización documental.
 
-- Control de semáforos físicos.
-- Despliegue urbano.
-- Coordinación multi-intersección.
-- Infraestructura Edge/Cloud real.
-- Ciberseguridad operacional.
+## Alcance y limitaciones
 
-## Documentación
+- Una sola intersección con dos aproximaciones.
+- Videos pregrabados, no cámaras de tráfico en directo.
+- El backend no mide directamente las colas ni la congestión desde el video.
+- Control por demanda simplificado, sin estimación certificada de capacidad vial.
+- Sin control físico de semáforos, coordinación multi-intersección ni despliegue urbano.
+- No es un controlador apto para regular tráfico real sin ingeniería y validación adicionales.
 
-- [Modelo matemático](docs/modelo-matematico.md)
-- [Fundamento técnico y referencias](docs/fundamento-tecnico.md)
+## Documentación técnica
 
-## Limitaciones
+- [Modelo matemático: métricas y reparto de verde](docs/modelo-matematico.md).
+- [Fundamento técnico y referencias](docs/fundamento-tecnico.md).
+- [Backend: detección, seguimiento y API](backend/README.md).
 
-- MVP de una intersección.
-- Dos aproximaciones controladas.
-- Videos pregrabados.
-- Máximo de 60 segundos por análisis en la demo.
-- Parámetros de control simplificados.
-- No es un controlador certificado para uso vial real.
+## Evidencia visual pendiente
 
-## Autor
+Este README **todavía no contiene capturas o GIFs reales** de la aplicación. Una siguiente iteración debería incorporar imágenes verificadas de la escena 3D, los indicadores y el análisis de videos; no se han fabricado capturas para aparentar resultados.
 
-Jhoser Simeon
+---
 
-Proyecto personal orientado a visión artificial, simulación y sistemas inteligentes de transporte.
+**Autor:** Jhoser Simeon · Proyecto personal sobre visión artificial, simulación y control de tráfico adaptativo.
